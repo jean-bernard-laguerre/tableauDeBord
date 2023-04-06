@@ -6,15 +6,18 @@
 #define MOTORPIN 7
 #define ECHOPIN 12
 #define TRIGPIN 13
+#define BUTTONPIN A5
+#define BUZZERPIN A2
 
 
 float temp;
 float hum;
 long duration;
+int status = 0;
+int button_state;
 int dist;
 int lum;
 int led_pins[4] = {8,9,10,11};
-
 
 DHT dht(DHTPIN, DHTTYPE);
 LiquidCrystal lcd(0, 1, 2, 3, 4, 5);
@@ -23,6 +26,7 @@ void setup()
 {
   pinMode(MOTORPIN, OUTPUT);
   pinMode(TRIGPIN, OUTPUT);
+  pinMode(BUZZERPIN, OUTPUT);
   pinMode(ECHOPIN, INPUT);
 
   lcd.begin(16, 2);
@@ -35,28 +39,36 @@ void loop()
   hum = dht.readHumidity();
   lum = analogRead(A0);
 
-    // Temperature
+  button_state = digitalRead(BUTTONPIN);
+  
+  if (button_state == HIGH) {
+    
+    if (status == 0) {
+    	status = 1;
+    }
+    else {
+    	status = 0;
+    }
+    delay(100);
+  }
+
+    // Temperature LED
   if (10 < temp && temp < 18) {
   	digitalWrite(led_pins[1], HIGH);
-    digitalWrite(led_pins[0], LOW);
   } else if (18 < temp && temp < 22){
   	digitalWrite(led_pins[0], HIGH);
-    digitalWrite(led_pins[1], LOW);
   } else if (temp > 22){
-  	digitalWrite(led_pins[0], LOW);
-    digitalWrite(led_pins[1], LOW);
     analogWrite(MOTORPIN, 255);
   }
 
-      // Humidité
+      // Humidité LED
   if (hum < 50) {
   	digitalWrite(led_pins[2], HIGH);
-    digitalWrite(led_pins[3], LOW);
   } else {
   	digitalWrite(led_pins[3], HIGH);
-    digitalWrite(led_pins[2], LOW);
   }
-
+      
+      //Distance
   digitalWrite(TRIGPIN, LOW);
   delayMicroseconds(2);
     // Sets the trigPin on HIGH state for 10 micro seconds
@@ -68,9 +80,24 @@ void loop()
     // Calculating the distance
   dist = duration * 0.034 / 2;
 
-  lcd.setCursor(0, 0);
-  lcd.println("Lumiere "+ String(lum)+"  ");
-  lcd.setCursor(0, 1);
-  lcd.println("Distance "+ String(dist)+" ");
+  if (dist < 20) {
+      tone(BUZZERPIN, 500);
+      delay(100);
+      noTone(BUZZERPIN);
+  }
+
+  if (status == 0) {
+      lcd.setCursor(0, 0);
+      lcd.print("Temp: "+ String(dht.readTemperature())+"       ");
+      lcd.setCursor(0, 1);
+      lcd.print("Hum: "+ String(dht.readHumidity())+"       ");
+  }
+  else {
+      lcd.setCursor(0, 0);
+      lcd.print("Lum: "+ String(lum)+"         ");
+      lcd.setCursor(0, 1);
+      lcd.print("Dist: "+ String(dist)+"         ");
+  }
+  
   delay(10);
 }
