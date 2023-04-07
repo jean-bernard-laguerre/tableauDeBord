@@ -7,7 +7,7 @@
 #define ECHOPIN 12
 #define TRIGPIN 13
 #define BUTTONPIN A5
-#define BUZZERPIN A2
+#define BUZZERPIN A3
 
 
 float temp;
@@ -41,6 +41,7 @@ void loop()
 
   button_state = digitalRead(BUTTONPIN);
   
+    // Navigation    
   if (button_state == HIGH) {
     
     if (status == 0) {
@@ -80,12 +81,6 @@ void loop()
     // Calculating the distance
   dist = duration * 0.034 / 2;
 
-  if (dist < 20) {
-      tone(BUZZERPIN, 500);
-      delay(100);
-      noTone(BUZZERPIN);
-  }
-
   if (status == 0) {
       lcd.setCursor(0, 0);
       lcd.print("Temp: "+ String(dht.readTemperature())+"       ");
@@ -97,6 +92,12 @@ void loop()
       lcd.print("Lum: "+ String(lum)+"         ");
       lcd.setCursor(0, 1);
       lcd.print("Dist: "+ String(dist)+"         ");
+
+      if (dist < 20) {
+          tone(BUZZERPIN, 500);
+          delay(100);
+          noTone(BUZZERPIN);
+      }
   }
   
   delay(10);
